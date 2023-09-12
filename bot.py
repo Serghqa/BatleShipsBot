@@ -1,5 +1,6 @@
 import init_pole
 from random import randint
+from time import sleep
 
 pole = init_pole.Pole()
 pole.arrangement()
@@ -8,7 +9,7 @@ pole.arrangement()
 class Bot:
     def __init__(self):
         self.coords = [[(i, j) for j in range(10)] for i in range(10)]  # координаты поля
-        self.coords_shots = {}  # координаты куда уже стреляли
+        self.coords_shots = {key: [] for key in range(10)}  # словарь хранения координат куда будут выстрелы
         self.count_ships = len(pole.ships_pole)  # количество кораблей на поле
 
     def set_shot_coords(self):  # создаем координаты выстрела
@@ -31,8 +32,19 @@ class Bot:
                     if ship.counter == 0:
                         pole.ships_pole.remove(ship)  # уничтожаем корабль если его прочность равна 0
                         self.count_ships -= 1  # уменьшаем счетчик количества кораблей
-        pole.pole[i][j] = 1
+        else:
+            pole.pole[i][j] = 1
 
 
 
 bot = Bot()
+while bot.count_ships:
+    i, j = bot.set_shot_coords()
+    for x in pole.pole:
+        print(*x)
+    print('-'*20)
+    bot.check_hit(i, j)
+    for x in pole.pole:
+        print(*x)
+    print('/'*20)
+    sleep(randint(1, 10))
