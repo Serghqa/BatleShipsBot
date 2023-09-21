@@ -4,7 +4,7 @@ from random import randint
 class Ship:
     def __init__(self, lenght, tp, x=None, y=None):
         """Инициализация корабля"""
-        self.lenght = lenght  # длина корабля
+        self.len_ship = lenght  # длина корабля
         self.tp = tp  # расположение корабля (tp = 1 - горизонтальное, tp = 2 - вертикальное)
         self.x = x
         self.y = y
@@ -25,9 +25,9 @@ class Ship:
         """Проверка выхода корабля за пределы поля"""
         x, y = self.get_start_coords()  # получение начала координат корабля
         if self.tp == 1:
-            return 0 <= x and x + self.lenght < 10 and 0 <= y < 10
+            return 0 <= x and x + self.len_ship < 10 and 0 <= y < 10
         if self.tp == 2:
-            return 0 <= y and y + self.lenght < 10 and 0 <= x < 10
+            return 0 <= y and y + self.len_ship < 10 and 0 <= x < 10
 
 
 class Pole:
@@ -51,11 +51,11 @@ class Pole:
                 x = ship.x
                 y = ship.y
                 if ship.tp == 1:
-                    for i in range(ship.lenght):
+                    for i in range(ship.len_ship):
                         self.pole[y][x + i] = '*'  # расставляем корабль на игровом поле
                         ship.cell[i] = (y, x + i)  # сохраняем координаты корабля в список
                 if ship.tp == 2:
-                    for i in range(ship.lenght):
+                    for i in range(ship.len_ship):
                         self.pole[y + i][x] = '*'  # расставляем корабль на игровом поле
                         ship.cell[i] = (y + i, x)  # сохраняем координаты корабля в список
                 break
@@ -70,11 +70,11 @@ class Pole:
                         x = ship.x
                         y = ship.y
                         if ship.tp == 1:
-                            for i in range(ship.lenght):
+                            for i in range(ship.len_ship):
                                 self.pole[y][x + i] = '*'  # расставляем корабль на игровое поле
                                 ship.cell[i] = (y, x + i)  # сохраняем координаты корабля в список
                         if ship.tp == 2:
-                            for i in range(ship.lenght):
+                            for i in range(ship.len_ship):
                                 self.pole[y + i][x] = '*'  # расставляем корабль на игровое поле
                                 ship.cell[i] = (y + i, x)  # сохраняем координаты корабля в список
                         break
@@ -116,12 +116,12 @@ class Pole:
         flag = False
         if ship.tp == 1:
             for i in range(y, y + 1):
-                for j in range(x, x + ship.lenght):
+                for j in range(x, x + ship.len_ship):
                     if self.check_collide(i, j):
                         flag = True  # корабль пересекается, проверка не прошла
                         return flag
         if ship.tp == 2:
-            for i in range(y, y + ship.lenght):
+            for i in range(y, y + ship.len_ship):
                 for j in range(x, x + 1):
                     if self.check_collide(i, j):
                         flag = True  # корабль пересекается, проверка не прошла

@@ -2,9 +2,6 @@ import init_pole
 from random import randint
 from time import sleep
 
-pole = init_pole.Pole()
-pole.arrangement()
-
 
 class Bot:
     def __init__(self):
@@ -19,9 +16,9 @@ class Bot:
         self.index_j = None  # координаты первого попадания по кораблю
         self.ship = None  # корабль по которому было попадание
         self.count_hit = 0  # счетчик попаданий по кораблю
-        self.positive_indexes = None  # список координат после определения позиции корабля
-        self.negative_indexes = None  # список координат после определения позиции корабля
-        self.pos = False
+        self.positive_indexes = []  # список координат после определения позиции корабля
+        self.negative_indexes = []  # список координат после определения позиции корабля
+
 
     def set_shot_coords(self):  # создаем координаты выстрела
         if self.count_hit == 0:
@@ -47,14 +44,13 @@ class Bot:
                 i, j = self.positive_indexes.pop(0)  # получаем координаты /
                 # больше координаты первого попадания
                 self.coords_shots.setdefault(i, []).append(j)
-                print(self.positive_indexes, self.index_i, self.index_j)
                 return i, j
-            elif self.negative_indexes:
-                i, j = self.negative_indexes.pop(0)  # получаем координаты /
-                # больше координаты первого попадания
-                self.coords_shots.setdefault(i, []).append(j)
-                print(self.negative_indexes, self.index_i, self.index_j)
-                return i, j
+            else:
+                if self.negative_indexes:
+                    i, j = self.negative_indexes.pop(0)  # получаем координаты /
+                    # больше координаты первого попадания
+                    self.coords_shots.setdefault(i, []).append(j)
+                    return i, j
 
     def add_around_index(self, i, j):  # функция добавления координат, где не может быть корабля
         l = len(self.coords[0])
@@ -76,34 +72,57 @@ class Bot:
             self.position_ship = 2  # горизонтальное положение
 
     def add_around_ship_index(self, ship):  # функция добавления координат вокруг корабля
-        for i, j in ship.cell:
-            self.add_around_index(i, j)
+        for i, j in ship.cell:  # перебираем координаты корабля
+            self.add_around_index(i, j)  # добавим индексы вокруг координаты корабля в массив, чтобы игнорировать их /
+            # в дальнейшем
 
     def set_list_shots(self):  # функция создания список добивания корабля
-        lst_shots_pos = []  # положительный список
-        lst_shots_neg = []  # отрицательный список
-        len_ship = self.ship.lenght  # определяем длину возможного максимума списка
-        for x in range(1, len_ship):
-            if self.position_ship == 1:  # вертикальное положение корабля
-                if self.index_i + x < len(self.coords[0]):
-                    if self.index_j not in self.coords_shots[self.index_i + x]:
-                        lst_shots_pos.append((self.index_i + x, self.index_j))
+        len_ship = self.ship.len_ship  # определяем длину возможного максимума списка
+        if self.position_ship == 1:  # вертикальное положение корабля
+            for x in range(1, len_ship):
+                if self.index_i + x < len(self.coords[0]):  # проверяем, что координата не выходит за пределы поля
+                    if pole.pole[self.index_i + x][self.index_j] == 2:  # если координата второе попадание - игнорируем
+                        continue
+                    else:
+                        if self.index_j not in self.coords_shots[self.index_i + x]:  # проверяем, что такой координаты /
+                            # еще нет в массиве куда уже стреляли
+                            self.positive_indexes.append((self.index_i + x, self.index_j))  # добавим в позитивный /
+                            # список на добивание
+                        else:
+                            break  # иначе не имеет смысла дальше добавлять координаты
+            for x in range(1, len_ship):
                 if 0 <= self.index_i - x:
-                    if self.index_j not in self.coords_shots[self.index_i - x]:
-                        lst_shots_neg.append((self.index_i - x, self.index_j))
-            elif self.position_ship == 2:
+                    if pole.pole[self.index_i - x][self.index_j] == 2:
+                        continue
+                    else:
+                        if self.index_j not in self.coords_shots[self.index_i - x]:
+                            self.negative_indexes.append((self.index_i - x, self.index_j))
+                        else:
+                            break
+        elif self.position_ship == 2:  # горизонтальное положение корабля
+            for x in range(1, len_ship):
                 if self.index_j + x < len(self.coords[0]):
-                    if self.index_j + x not in self.coords_shots[self.index_i]:
-                        lst_shots_pos.append((self.index_i, self.index_j + x))
+                    if pole.pole[self.index_i][self.index_j + x] == 2:
+                        continue
+                    else:
+                        if self.index_j + x not in self.coords_shots[self.index_i]:
+                            self.positive_indexes.append((self.index_i, self.index_j + x))
+                        else:
+                            break
+            for x in range(1, len_ship):
                 if 0 <= self.index_j - x:
-                    if self.index_j - x not in self.coords_shots[self.index_i]:
-                        lst_shots_neg.append((self.index_i, self.index_j - x))
-        return lst_shots_pos, lst_shots_neg
+                    if pole.pole[self.index_i][self.index_j - x] == 2:
+                        continue
+                    else:
+                        if self.index_j - x not in self.coords_shots[self.index_i]:
+                            self.negative_indexes.append((self.index_i, self.index_j - x))
+                        else:
+                            break
 
     def check_hit(self, i, j):  # проверка попадания по кораблю
         if pole.pole[i][j] == '*':  # попадание
             self.count_hit += 1
-            pole.pole[i][j] = '.'  # отобразим на экране попадание
+            pole.pole[i][j] = self.count_hit  # отобразим на экране попадание
             if self.count_hit == 1:  # если первое попадание
                 self.ship = self.find_ship(i, j)  # получаем корабль по координатам выстрела
                 self.ship.counter -= 1  # уменьшаем очки прочности корабля
@@ -125,9 +144,9 @@ class Bot:
                     self.count_hit = 0  # обнуляем счетчик попаданий по кораблю
                 else:
                     self.determine_position_ship(self.index_i, self.index_j, i, j)  # определим позицию корабля
-                    self.positive_indexes, self.negative_indexes = self.set_list_shots()  # создаем два списка /
+                    self.set_list_shots()  # создаем два списка /
                     # координат обстрела относительно положения корабля
-                    self.pos = True
+
             else:
                 self.ship.counter -= 1  # уменьшаем очки прочности корабля
                 if self.ship.counter == 0:  # все палубы корабля подбиты
@@ -136,20 +155,22 @@ class Bot:
                     self.ship = None  # корабль уничтожен
                     self.count_ships -= 1  # уменьшаем счетчик кораблей
                     self.count_hit = 0  # обнуляем счетчик попаданий по кораблю
-                    self.pos = False
+                    self.positive_indexes.clear()  # очистим позитивный список
+                    self.negative_indexes.clear()  # очистим негативный список
         else:
-            pole.pole[i][j] = 1  # обозначим промах на поле
-            self.pos = False
+            pole.pole[i][j] = '#'  # обозначим промах на поле
+            if self.count_hit > 1:  # проверим, что идет добивание по координатам из позитивного списка
+                self.positive_indexes.clear()  # если промах по координатам позитивного списка, очистим его /
+                # (он больше не нужен)
 
 
-bot = Bot()
-count = 0
-while bot.count_ships:
-    i, j = bot.set_shot_coords()
-    bot.check_hit(i, j)
-    count += 1
-    print(count)
-    for x in pole.pole:
-        print(*x, sep=' ')
-    print('/' * 20)
-    #sleep(5)
+for x in range(1):
+    pole = init_pole.Pole()
+    pole.arrangement()
+    bot = Bot()
+    while bot.count_ships:
+        i, j = bot.set_shot_coords()
+        bot.check_hit(i, j)
+        #for i in pole.pole:
+            #print(*i)
+        #print('-'*20)
