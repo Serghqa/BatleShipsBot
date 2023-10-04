@@ -9,7 +9,6 @@ class Ship:
         self.x = x
         self.y = y
         self.cell = [0 for i in range(lenght)]  # список для хранения координат корабля
-        self.destroyed = False  # флаг уничтожения корабля
         self.counter = lenght  # счетчик палуб корабля
 
     def set_start_coords(self, x, y):
