@@ -1,5 +1,3 @@
-import time
-
 import init_pole
 from random import randint
 from time import sleep
@@ -7,6 +5,7 @@ from time import sleep
 
 class Bot:
     def __init__(self):
+        self.name = 'Bot'
         self.coords = [[(i, j) for j in range(10)] for i in range(10)]  # координаты поля
         self.coords_shots = {key: [] for key in range(10)}  # словарь хранения координат куда будут выстрелы
         self.count_ships = len(pole.ships_pole)  # количество кораблей на поле
@@ -208,20 +207,60 @@ class Bot:
                 self.positive_indexes.clear()  # если промах по координатам позитивного списка, очистим его /
                 # (он больше не нужен)
 
-count = 0
-for x in range(1):
-    pole = init_pole.Pole()
-    pole.arrangement()
-    bot = Bot()
-    while bot.count_ships:
-        i, j = bot.set_shot_coords()
-        bot.check_hit(i, j)
-        count += 1
-        print(i, j)
-        for i in pole.pole:
+class Player:
+    def __init__(self, name='Player'):
+        self.name = name
+        self.coords_shots = {key: [] for key in range(10)}  # словарь хранения координат куда будут произведены выстрелы
+        self.count_ships = len(pole1.ships_pole)  # количество кораблей на поле
 
-            print(*i)
-        print('-'*20)
-        #time.sleep(5)
-        #print(bot.min_len_ship)
-print(count)
+    def set_coords(self):
+        print('Введите координату "i" и "j" через пробел в диапазоне от 0 до 9')
+        while True:
+            i, j = map(int, input().split())
+            if not self.check_coords(i, j):
+                return i, j
+
+    def check_coords(self, i, j):
+        return j in self.coords_shots[i]
+
+    def find_ship(self, i, j):
+        for ship in pole1.ships_pole:  # перебираем корабли
+            if any(filter(lambda x: x == (i, j), ship.cell)):  # ищем корабль, которому принадлежит координата:
+                return ship
+
+    def check_hit(self, i, j):
+        if pole1.pole[i][j] == '*':  # если есть попадание
+            ship = self.find_ship(i, j)  # найдем корабль
+            ship.hits += 1  # счетчик попадания по кораблю увеличим
+            ship.counter -= 1  # прочность корабля уменьшим
+            pole1.pole[i][j] = ship.hits  # отобразим попадание
+            if ship.counter == 0:
+                pole1.ships_pole.remove(ship)  # удалим корабль из списка
+                self.count_ships -= 1  # уменьшим счетчик оставшихся кораблей
+        else:
+            pole1.pole[i][j] = '#'
+
+
+for x in range(1):
+    pole = init_pole.Pole()  # инициализация поля игрока
+    pole1 = init_pole.Pole()  # инициализация поля бота
+    pole.arrangement()  # расстановка кораблей на поле игрока
+    pole1.arrangement()  # расстановка кораблей на поле бота
+    bot = Bot()  # инициализация бота
+    player = Player()
+    PLAY = True
+    while PLAY:
+        i1, j1 = player.set_coords()  # игрок вводит координаты выстрела
+        player.check_hit(i1, j1)  # проверка попадания по кораблю игроком
+        i2, j2 = bot.set_shot_coords()  # получение координаты выстрела бота
+        bot.check_hit(i2, j2)  # проверка попадания по кораблю ботом
+        print(f"{bot.name} выстрелил ({i2}, {j2}) {player.name.rjust(11)} выстрелил ({i1}, {j1})")
+        for c in range(len(pole1.pole)):
+            print(*pole.pole[c], '     ', *pole1.pole[c])
+        print('-'*45)
+        if not pole1.ships_pole:
+            print(f"{player.name} выиграл!!!")
+            PLAY = False
+        if not pole.ships_pole:
+            print(f"{bot.name} выиграл!!!")
+            PLAY = False

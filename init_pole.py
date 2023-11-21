@@ -10,6 +10,7 @@ class Ship:
         self.y = y
         self.cell = [0 for i in range(lenght)]  # список для хранения координат корабля
         self.counter = lenght  # счетчик палуб корабля
+        self.hits = 0
 
     def set_start_coords(self, x, y):
         """Начало координат корабля"""
