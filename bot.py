@@ -215,9 +215,9 @@ class Player:
         self.count_ships = len(obj.ships_pole)  # количество кораблей на поле
 
     def set_coords(self):
-        print('Введите координату "i" и "j" через пробел в диапазоне от 0 до 9')
+        print('Введите координату "i" и "j" без пробела в диапазоне от 0 до 9')
         while True:
-            i, j = map(int, input().split())
+            i, j = map(int, input())
             if not self.check_coords(i, j):
                 return i, j
 
@@ -239,28 +239,39 @@ class Player:
             if ship.counter == 0:
                 obj.ships_pole.remove(ship)  # удалим корабль из списка
                 self.count_ships -= 1  # уменьшим счетчик оставшихся кораблей
+            return ship.counter
         else:
             obj.pole[i][j] = '#'
 
 
 class DrawPole:
-    def __init__(self, pole1, pole2, obj1, obj2, win='Выиграл!!!', shot='выстрелил'):
+    def __init__(self, pole1, pole2, obj1, obj2, win='Выиграл!!!', shot='выстрелил', wound='Ранил', kill='Убил'):
         self.pole1 = pole1
         self.pole2 = pole2
         self.player1 = obj1
         self.player2 = obj2
         self.shot = shot
         self.win = win
+        self.wound = wound
+        self.kill = kill
         self.indent = 10
         self.len_pole = len(pole.pole)
         self.numer = ' '.join([str(i) for i in range(self.len_pole)])
+        self.draw1 = [['+' for y in range(self.len_pole)] for x in range(self.len_pole)]
+        self.draw2 = [['+' for y in range(self.len_pole)] for x in range(self.len_pole)]
 
-    def draw_pole(self, i1, j1, i2, j2):
-        print(f'{self.player1.name} {self.shot} {i1, j1}{self.player2.name.rjust(self.indent+7)} {self.shot} {i2, j2}')
-        print(self.numer, ' '*self.indent, self.numer)
+    def draw_pole(self, i1, j1, i2, j2, ship_count):
+        self.draw1[i1][j1] = self.pole1.pole[i1][j1]
+        self.draw2[i2][j2] = self.pole2.pole[i2][j2]
+        print(f'{self.player1.name} {self.shot} {i1, j1}{self.player2.name.rjust(self.indent+11)} {self.shot} {i2, j2}')
+        if ship_count is not None:
+            if ship_count == 0:
+                print(' '*35, self.kill)
+            else:
+                print(' '*34, self.wound)
+        print('  '+ self.numer, ' '*(self.indent+4), self.numer)
         for c in range(self.len_pole):
-            print(*self.pole1.pole[c], ' '*self.indent, *self.pole2.pole[c])
-        print('-'*self.indent)
+            print(c, *self.draw1[c], ' '*self.indent, c, *self.draw2[c])
 
     def print_win(self, obj):
         print(f'{obj.name} {self.win}')
@@ -276,11 +287,11 @@ for x in range(1):
     draw = DrawPole(pole, pole1, bot, player)
     PLAY = True
     while PLAY:
-        i1, j1 = player.set_coords()  # игрок вводит координаты выстрела
-        player.check_hit(i1, j1, pole1)  # проверка попадания по кораблю игроком
-        i2, j2 = bot.set_shot_coords()  # получение координаты выстрела бота
-        bot.check_hit(i2, j2, pole)  # проверка попадания по кораблю ботом
-        draw.draw_pole(i1, j1, i2, j2)
+        i1, j1 = bot.set_shot_coords()  # получение координаты выстрела бота
+        bot.check_hit(i1, j1, pole)  # проверка попадания по кораблю ботом
+        i2, j2 = player.set_coords()  # игрок вводит координаты выстрела
+        ship_count = player.check_hit(i2, j2, pole1)  # проверка попадания по кораблю игроком
+        draw.draw_pole(i1, j1, i2, j2, ship_count)
         if not pole1.ships_pole:
             draw.print_win(player)
             PLAY = False
