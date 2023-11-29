@@ -3,6 +3,7 @@ from random import randint
 
 
 class Bot:
+    """Класс создания и управления ботом"""
     def __init__(self, obj, name='Bot'):
         self.name = name
         self.coords = [[(i, j) for j in range(10)] for i in range(10)]  # координаты поля
@@ -87,7 +88,7 @@ class Bot:
                     return i, j
 
     def add_around_index(self, i, j):  # функция добавления координат, где не может быть корабля
-        l: int = len(self.coords[0])
+        l = len(self.coords[0])
         for x, y in self.around_index:
             if 0 <= i + x < l and 0 <= j + y < l:  # проверяем /
                 # координату на возможный выход за пределы поля
@@ -111,7 +112,7 @@ class Bot:
             self.add_around_index(i, j)  # добавим индексы вокруг координаты корабля в массив, чтобы игнорировать их /
             # в дальнейшем
 
-    def set_list_shots(self, obj):  # функция создания список добивания корабля
+    def set_list_shots(self, obj):  # создание списка добивания корабля
         len_ship = self.ship.len_ship  # определяем длину возможного максимума списка
         if self.position_ship == 1:  # вертикальное положение корабля
             for x in range(1, len_ship):
@@ -209,28 +210,41 @@ class Bot:
 
 
 class Player:
+    """Класс игрока"""
     def __init__(self, obj, name='Player'):
+        """Инициализируем данные игрока"""
         self.name = name
         self.coords_shots = {key: [] for key in range(10)}  # словарь хранения координат куда будут произведены выстрелы
         self.count_ships = len(obj.ships_pole)  # количество кораблей на поле
 
     def set_coords(self):
+        """Ввод координат выстрела игроком"""
         print('Введите координату "i" и "j" без пробела в диапазоне от 0 до 9')
         while True:
-            i, j = map(int, input())
-            if not self.check_coords(i, j):
-                return i, j
+            try:
+                i, j = map(int, input())
+                if not self.check_coords(i, j):
+                    self.coords_shots[i].append(j)
+                    return i, j
+                else:
+                    print('Уже стреляли по этим координатам, введите еще раз')
+            except ValueError:
+                print('Некорректные координаты')
+                print('Введите координату "i" и "j" без пробела в диапазоне от 0 до 9')
 
     def check_coords(self, i, j):
+        """Проверка повторения координат перед выстрелом"""
         return j in self.coords_shots[i]
 
     @staticmethod
     def find_ship(i, j, obj):
+        """Поиск корабля по координатам попадания"""
         for ship in obj.ships_pole:  # перебираем корабли
             if any(filter(lambda x: x == (i, j), ship.cell)):  # ищем корабль, которому принадлежит координата:
                 return ship
 
     def check_hit(self, i, j, obj):
+        """Проверка попадания по кораблю"""
         if obj.pole[i][j] == '*':  # если есть попадание
             ship = self.find_ship(i, j, obj)  # найдем корабль
             ship.hits += 1  # счетчик попадания по кораблю увеличим
@@ -239,62 +253,68 @@ class Player:
             if ship.counter == 0:
                 obj.ships_pole.remove(ship)  # удалим корабль из списка
                 self.count_ships -= 1  # уменьшим счетчик оставшихся кораблей
-            return ship.counter
+            return ship.counter  # вернем прочность корабля
         else:
-            obj.pole[i][j] = '#'
+            obj.pole[i][j] = '#'  # отображение промаха
 
 
 class DrawPole:
-    def __init__(self, pole1, pole2, obj1, obj2, win='Выиграл!!!', shot='выстрелил', wound='Ранил', kill='Убил'):
-        self.pole1 = pole1
-        self.pole2 = pole2
-        self.player1 = obj1
-        self.player2 = obj2
-        self.shot = shot
-        self.win = win
-        self.wound = wound
-        self.kill = kill
+    """Класс рисования игрового поля игрока и бота"""
+    def __init__(self, pole1, pole2, obj1, obj2):
+        self.pole_bot = pole1  # поле бота
+        self.pole_player = pole2  # поле игрока
+        self.player_bot = obj1  # объект бот
+        self.player = obj2  # объект игрок
+        self.shot = 'выстрелил'
+        self.win = 'Выиграл!!!'
+        self.wound = 'Ранил'
+        self.mishit = 'промах'
+        self.kill = 'Убил'
         self.indent = 10
-        self.len_pole = len(pole.pole)
-        self.numer = ' '.join([str(i) for i in range(self.len_pole)])
-        self.draw1 = [['+' for y in range(self.len_pole)] for x in range(self.len_pole)]
-        self.draw2 = [['+' for y in range(self.len_pole)] for x in range(self.len_pole)]
+        self.len_pole = len(pole_bot.pole)  # длина поля
+        self.numer = ' '.join([str(i) for i in range(self.len_pole)])  # нумерация колонок поля
+        self.draw_bot = [['.' for y in range(self.len_pole)] for x in range(self.len_pole)]  # заполнение поля бота
+        self.draw_player = [['.' for y in range(self.len_pole)] for x in range(self.len_pole)]  # заполнение поля игрока
 
     def draw_pole(self, i1, j1, i2, j2, ship_count):
-        self.draw1[i1][j1] = self.pole1.pole[i1][j1]
-        self.draw2[i2][j2] = self.pole2.pole[i2][j2]
-        print(f'{self.player1.name} {self.shot} {i1, j1}{self.player2.name.rjust(self.indent+11)} {self.shot} {i2, j2}')
+        """Рисование игровых полей"""
+        self.draw_bot[i1][j1] = self.pole_bot.pole[i1][j1]
+        self.draw_player[i2][j2] = self.pole_player.pole[i2][j2]
+        print(f'  {self.player_bot.name} {self.shot} {i1, j1}{self.player.name.rjust(self.indent+9)} {self.shot} {i2, j2}')
+        print(f'  Кораблей {self.player_bot.name} = {self.player.count_ships} шт.            Кораблей {self.player.name}'
+              f' = {self.player_bot.count_ships} шт.')
         if ship_count is not None:
             if ship_count == 0:
-                print(' '*35, self.kill)
+                print(' ' * 35, self.kill)
             else:
-                print(' '*34, self.wound)
-        print('  '+ self.numer, ' '*(self.indent+4), self.numer)
+                print(' ' * 34, self.wound)
+        print('  ' + self.numer, ' ' * (self.indent+2), self.numer)
         for c in range(self.len_pole):
-            print(c, *self.draw1[c], ' '*self.indent, c, *self.draw2[c])
+            print(c, * self.draw_bot[c], ' ' * self.indent, c, * self.draw_player[c])
 
     def print_win(self, obj):
+        """Объявление победителя"""
         print(f'{obj.name} {self.win}')
 
 
 for x in range(1):
-    pole = init_pole.Pole()  # инициализация поля игрока
+    pole_bot = init_pole.Pole()  # инициализация поля игрока
     pole1 = init_pole.Pole()  # инициализация поля бота
-    pole.arrangement()  # расстановка кораблей на поле игрока
+    pole_bot.arrangement()  # расстановка кораблей на поле игрока
     pole1.arrangement()  # расстановка кораблей на поле бота
-    bot = Bot(pole)  # инициализация бота
+    bot = Bot(pole_bot)  # инициализация бота
     player = Player(pole1)
-    draw = DrawPole(pole, pole1, bot, player)
+    draw = DrawPole(pole_bot, pole1, bot, player)
     PLAY = True
     while PLAY:
         i1, j1 = bot.set_shot_coords()  # получение координаты выстрела бота
-        bot.check_hit(i1, j1, pole)  # проверка попадания по кораблю ботом
+        bot.check_hit(i1, j1, pole_bot)  # проверка попадания по кораблю ботом
         i2, j2 = player.set_coords()  # игрок вводит координаты выстрела
         ship_count = player.check_hit(i2, j2, pole1)  # проверка попадания по кораблю игроком
-        draw.draw_pole(i1, j1, i2, j2, ship_count)
-        if not pole1.ships_pole:
+        draw.draw_pole(i1, j1, i2, j2, ship_count)  # вывод игровых полей на экран
+        if not pole1.ships_pole:  # проверка оставшихся кораблей у бота
             draw.print_win(player)
             PLAY = False
-        if not pole.ships_pole:
+        if not pole_bot.ships_pole:  # проверка оставшихся кораблей у бота
             draw.print_win(bot)
             PLAY = False
