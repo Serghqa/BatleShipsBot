@@ -22,10 +22,12 @@ class Bot:
         self.min_len_ship = 1  # длина самого маленького(однопалубного) корабля
 
     def set_min_len_ship(self, obj):
+        """Определение длины минимального корабля (количество палуб)"""
         self.min_len_ship = min(obj.ships_pole, key=lambda x: x.len_ship).len_ship  # определяем длину /
         # минимального корабля
 
-    def check_meaning_shot(self, i, j):  # метод определения целесообразности выстрела
+    def check_meaning_shot(self, i, j):
+        """Метод определения целесообразности выстрела"""
         l: int = len(self.coords[0])  # максимальный предел поля
         if self.min_len_ship == 1:  # если есть однопалубные корабли - есть смысл стрелять
             return True
@@ -53,7 +55,8 @@ class Bot:
                 break
         return self.min_len_ship <= gor or self.min_len_ship <= ver  # условие вхождения минимального корабля
 
-    def set_shot_coords(self):  # создаем координаты выстрела
+    def set_shot_coords(self):
+        """Метод определения координаты выстрела"""
         if self.count_hit == 0:
             i = randint(0, 9)  # координата выстрела по оси x
             j = randint(0, 9)  # координата выстрела по оси y
@@ -87,7 +90,8 @@ class Bot:
                     self.coords_shots.setdefault(i, []).append(j)
                     return i, j
 
-    def add_around_index(self, i, j):  # функция добавления координат, где не может быть корабля
+    def add_around_index(self, i, j):
+        """Метод добавления координат, где не может быть корабля"""
         l = len(self.coords[0])
         for x, y in self.around_index:
             if 0 <= i + x < l and 0 <= j + y < l:  # проверяем /
@@ -97,22 +101,26 @@ class Bot:
 
     @staticmethod
     def find_ship(i, j, obj):
+        """Поиск и возвращение корабля по координатам"""
         for ship in obj.ships_pole:  # перебираем корабли
             if any(filter(lambda x: x == (i, j), ship.cell)):  # ищем корабль, которому принадлежит координата:
                 return ship
 
-    def determine_position_ship(self, i, j, x, y):  # функция определения позиции корабля (вертикальное\горизонтальное)
+    def determine_position_ship(self, i, j, x, y):
+        """Метод определения позиции корабля (вертикальное, горизонтальное)"""
         if i != x:
             self.position_ship = 1  # вертикальное положение
         if j != y:
             self.position_ship = 2  # горизонтальное положение
 
-    def add_around_ship_index(self, ship):  # функция добавления координат вокруг корабля
+    def add_around_ship_index(self, ship):
+        """Метод добавления координат вокруг корабля"""
         for i, j in ship.cell:  # перебираем координаты корабля
             self.add_around_index(i, j)  # добавим индексы вокруг координаты корабля в массив, чтобы игнорировать их /
             # в дальнейшем
 
-    def set_list_shots(self, obj):  # создание списка добивания корабля
+    def set_list_shots(self, obj):
+        """Создание списка с координатами для добивания корабля"""
         len_ship = self.ship.len_ship  # определяем длину возможного максимума списка
         if self.position_ship == 1:  # вертикальное положение корабля
             for x in range(1, len_ship):
@@ -155,7 +163,8 @@ class Bot:
                         else:
                             break
 
-    def check_hit(self, i, j, obj):  # проверка попадания по кораблю
+    def check_hit(self, i, j, obj):
+        """Проверка попадания по кораблю"""
         if obj.pole[i][j] == '*':  # попадание
             self.count_hit += 1
             obj.pole[i][j] = self.count_hit  # отобразим на экране попадание
@@ -265,12 +274,14 @@ class DrawPole:
         self.pole_player = pole2  # поле игрока
         self.player_bot = obj1  # объект бот
         self.player = obj2  # объект игрок
+        self.event_bot = None
+        self.event_player = None
         self.shot = 'выстрелил'
         self.win = 'Выиграл!!!'
         self.wound = 'Ранил'
-        self.mishit = 'промах'
+        self.mishit = 'Мимо'
         self.kill = 'Убил'
-        self.indent = 10
+        self.indent = 20
         self.len_pole = len(pole_bot.pole)  # длина поля
         self.numer = ' '.join([str(i) for i in range(self.len_pole)])  # нумерация колонок поля
         self.draw_bot = [['.' for y in range(self.len_pole)] for x in range(self.len_pole)]  # заполнение поля бота
@@ -278,19 +289,28 @@ class DrawPole:
 
     def draw_pole(self, i1, j1, i2, j2, ship_count):
         """Рисование игровых полей"""
+        self.event_bot = self.event_player = self.mishit
         self.draw_bot[i1][j1] = self.pole_bot.pole[i1][j1]
         self.draw_player[i2][j2] = self.pole_player.pole[i2][j2]
-        print(f'  {self.player_bot.name} {self.shot} {i1, j1}{self.player.name.rjust(self.indent+9)} {self.shot} {i2, j2}')
-        print(f'  Кораблей {self.player_bot.name} = {self.player.count_ships} шт.            Кораблей {self.player.name}'
-              f' = {self.player_bot.count_ships} шт.')
+        print(f'{self.player_bot.name} {self.shot} {i1, j1}{self.player.name.rjust(19)} {self.shot} {i2, j2}')
+        message_player = f'Кораблей {self.player.name} = {self.player_bot.count_ships} шт.'
+        message_bot = f'Кораблей {self.player_bot.name} = {self.player.count_ships} шт.'
+        print(message_bot.ljust(self.indent), message_player)
+        if self.draw_bot[i1][j1] in range(1, 5):
+            if self.player_bot.ship:
+                self.event_bot = self.wound
+            else:
+                self.event_bot = self.kill
+
         if ship_count is not None:
             if ship_count == 0:
-                print(' ' * 35, self.kill)
+                self.event_player = self.kill
             else:
-                print(' ' * 34, self.wound)
-        print('  ' + self.numer, ' ' * (self.indent+2), self.numer)
+                self.event_player = self.wound
+        print(self.event_bot, self.event_player.rjust(36-len(self.event_bot)))
+        print('  ' + self.numer, ' ' * 12, self.numer)
         for c in range(self.len_pole):
-            print(c, * self.draw_bot[c], ' ' * self.indent, c, * self.draw_player[c])
+            print(c, *self.draw_bot[c], ' '*10, c, *self.draw_player[c])
 
     def print_win(self, obj):
         """Объявление победителя"""
