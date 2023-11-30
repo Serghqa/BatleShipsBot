@@ -281,7 +281,7 @@ class DrawPole:
         self.wound = 'Ранил'
         self.mishit = 'Мимо'
         self.kill = 'Убил'
-        self.indent = 20
+        self.indent = 10
         self.len_pole = len(pole_bot.pole)  # длина поля
         self.numer = ' '.join([str(i) for i in range(self.len_pole)])  # нумерация колонок поля
         self.draw_bot = [['.' for y in range(self.len_pole)] for x in range(self.len_pole)]  # заполнение поля бота
@@ -293,21 +293,20 @@ class DrawPole:
         self.draw_bot[i1][j1] = self.pole_bot.pole[i1][j1]
         self.draw_player[i2][j2] = self.pole_player.pole[i2][j2]
         print(f'{self.player_bot.name} {self.shot} {i1, j1}{self.player.name.rjust(19)} {self.shot} {i2, j2}')
-        message_player = f'Кораблей {self.player.name} = {self.player_bot.count_ships} шт.'
-        message_bot = f'Кораблей {self.player_bot.name} = {self.player.count_ships} шт.'
-        print(message_bot.ljust(self.indent), message_player)
+        message_player = f'Кораблей {self.player.name} = {str(self.player_bot.count_ships).rjust(2, '0')} шт.'
+        message_bot = f'Кораблей {self.player_bot.name} = {str(self.player.count_ships).rjust(2, '0')} шт.'
+        print(f'{message_bot}{message_player.rjust(36)}')
         if self.draw_bot[i1][j1] in range(1, 5):
             if self.player_bot.ship:
                 self.event_bot = self.wound
             else:
                 self.event_bot = self.kill
-
         if ship_count is not None:
             if ship_count == 0:
                 self.event_player = self.kill
             else:
                 self.event_player = self.wound
-        print(self.event_bot, self.event_player.rjust(36-len(self.event_bot)))
+        print(self.event_bot.ljust(32), self.event_player)
         print('  ' + self.numer, ' ' * 12, self.numer)
         for c in range(self.len_pole):
             print(c, *self.draw_bot[c], ' '*10, c, *self.draw_player[c])
@@ -316,25 +315,32 @@ class DrawPole:
         """Объявление победителя"""
         print(f'{obj.name} {self.win}')
 
+    def finish_draw(self):
+        self.draw_bot = [['*' if self.pole_bot.pole[i][j] == '*' else self.pole_bot.pole[i][j] for j in range(self.len_pole)] for i in range(self.len_pole)]
+        self.draw_player = [['*' if self.pole_player.pole[i][j] == '*' else self.pole_player.pole[i][j] for j in range(self.len_pole)] for i in range(self.len_pole)]
+
 
 for x in range(1):
-    pole_bot = init_pole.Pole()  # инициализация поля игрока
-    pole1 = init_pole.Pole()  # инициализация поля бота
+    pole_bot = init_pole.Pole()  # инициализация поля игры для бота
+    pole_player = init_pole.Pole()  # инициализация поля игры для игрока
     pole_bot.arrangement()  # расстановка кораблей на поле игрока
-    pole1.arrangement()  # расстановка кораблей на поле бота
+    pole_player.arrangement()  # расстановка кораблей на поле бота
     bot = Bot(pole_bot)  # инициализация бота
-    player = Player(pole1)
-    draw = DrawPole(pole_bot, pole1, bot, player)
+    player = Player(pole_player)
+    draw = DrawPole(pole_bot, pole_player, bot, player)
     PLAY = True
     while PLAY:
         i1, j1 = bot.set_shot_coords()  # получение координаты выстрела бота
         bot.check_hit(i1, j1, pole_bot)  # проверка попадания по кораблю ботом
         i2, j2 = player.set_coords()  # игрок вводит координаты выстрела
-        ship_count = player.check_hit(i2, j2, pole1)  # проверка попадания по кораблю игроком
+        ship_count = player.check_hit(i2, j2, pole_player)  # проверка попадания по кораблю игроком
         draw.draw_pole(i1, j1, i2, j2, ship_count)  # вывод игровых полей на экран
-        if not pole1.ships_pole:  # проверка оставшихся кораблей у бота
+        if not pole_player.ships_pole:  # проверка оставшихся кораблей у бота
             draw.print_win(player)
             PLAY = False
         if not pole_bot.ships_pole:  # проверка оставшихся кораблей у бота
             draw.print_win(bot)
             PLAY = False
+    draw.finish_draw()
+    for i in range(draw.len_pole):
+        print(' ', *draw.draw_bot[i], '           ', *draw.draw_player[i])
